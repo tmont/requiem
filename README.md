@@ -130,14 +130,21 @@ The response body is not consumed.
 
 `RequiemResponse` is the following:
 
-```
+```typescript
 interface RequiemResponse extends http.IncomingMessage {
   requestedUrl: string;
 }
 ``` 
 
-#### `.requestBody(options: RequiemOptions): Promise<Buffer>`
-Sends a request, consumes the response body, and returns the body as a `Buffer`.
+#### `.requestBody(options: RequiemOptions): Promise<RequiemResponseWithBody>`
+Sends a request, consumes the response body, and returns the response with the
+`body` attached as a `Buffer`:
+
+```typescript
+interface RequiemResponseWithBody extends RequiemResponse {
+  body: Buffer;
+}
+``` 
 
 #### `.requestJson<T = any>(options: RequiemOptions): Promise<T>`
 Sends a request, consumes the response body, and parses the body as JSON via `JSON.parse`.
