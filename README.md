@@ -21,6 +21,13 @@ full-featured, with many bells and whistles.
 - First-class TypeScript support
 - Automatically throw based on status code (configurable via `throwOnErrorResponse` configuration option)
 
+### Installation
+```bash
+npm install requiem-http
+# or
+yarn add requiem-http
+```
+
 ### Example usage
 ```javascript
 const requiem = require('requiem-http');
