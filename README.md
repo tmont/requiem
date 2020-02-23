@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tmont/requiem.svg?branch=master)](https://travis-ci.org/tmont/requiem)
+
 ## Requiem
 A simple, dependency-free wrapper around Node's HTTP request functionality.
 
