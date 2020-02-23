@@ -101,7 +101,7 @@ interface RequiemOptions {
 
   // request body (only one of "body" and "bodyJson" may be set)
   body?: string | Buffer;
-  bodyJson?: any;
+  bodyJson?: any; // this will automatically set "Content-Type: application/json" for you
 
   method?: string; // defaults to 'GET'
 
