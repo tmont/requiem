@@ -70,8 +70,8 @@ export interface RequiemResponse extends http.IncomingMessage {
 	requestedUrl: string;
 }
 
-export interface RequiemResponseWithBody extends RequiemResponse {
-	body: Buffer;
+export interface RequiemResponseWithBody<T> extends RequiemResponse {
+	body: T;
 }
 
 export interface RequiemRequest extends http.ClientRequest {
@@ -314,14 +314,14 @@ export const request = (options: RequiemOptions): Promise<RequiemResponse> => {
 	});
 };
 
-export const requestBody = async (options: RequiemOptions): Promise<RequiemResponseWithBody> => {
+export const requestBody = async (options: RequiemOptions): Promise<RequiemResponseWithBody<Buffer>> => {
 	const res = await request(options);
 	const buffers: Buffer[] = [];
-	return new Promise<RequiemResponseWithBody>((resolve, reject) => {
+	return new Promise<RequiemResponseWithBody<Buffer>>((resolve, reject) => {
 		res.on('error', reject);
 		res.on('data', chunk => buffers.push(chunk));
 		res.on('end', () => {
-			const result: RequiemResponseWithBody = Object.assign(res, {
+			const result: RequiemResponseWithBody<Buffer> = Object.assign(res, {
 				body: Buffer.concat(buffers),
 			});
 
@@ -330,12 +330,15 @@ export const requestBody = async (options: RequiemOptions): Promise<RequiemRespo
 	});
 };
 
-export const requestJson = async <T = any>(options: RequiemOptions): Promise<T> => {
+export const requestJson = async <T = any>(options: RequiemOptions): Promise<RequiemResponseWithBody<T>> => {
 	const res = await requestBody(options);
 	const body = res.body;
 	const bodyStr = body.toString('utf8');
 	try {
-		return JSON.parse(bodyStr);
+		const json = JSON.parse(bodyStr);
+		return Object.assign(res, {
+			body: json,
+		});
 	} catch (e) {
 		throw new RequiemError(
 			'InvalidJsonBody',

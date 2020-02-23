@@ -41,7 +41,7 @@ requiem.request('https://example.com/')
 
 // get the response body as JSON
 requiem.requestJson('https://jsonplaceholder.typicode.com/posts/1')
-  .then((json) => console.log(json))
+  .then((res) => console.log(res.body))
   .catch((err) => console.error(err));
 
 // POST a JSON body
@@ -136,7 +136,7 @@ interface RequiemResponse extends http.IncomingMessage {
 }
 ``` 
 
-#### `.requestBody(options: RequiemOptions): Promise<RequiemResponseWithBody>`
+#### `.requestBody(options: RequiemOptions): Promise<RequiemResponseWithBody<Buffer>>`
 Sends a request, consumes the response body, and returns the response with the
 `body` attached as a `Buffer`:
 
@@ -146,7 +146,14 @@ interface RequiemResponseWithBody extends RequiemResponse {
 }
 ``` 
 
-#### `.requestJson<T = any>(options: RequiemOptions): Promise<T>`
-Sends a request, consumes the response body, and parses the body as JSON via `JSON.parse`.
+#### `.requestJson<T = any>(options: RequiemOptions): Promise<RequiemResponseWithBody<T>>`
+Sends a request, consumes the response body, parses the body as JSON via `JSON.parse`
+and returns the response with the `body` attached as the parsed JSON object.
 
 If the response is not valid JSON, an error is thrown with code `InvalidJsonBody`.
+
+```typescript
+interface RequiemResponseWithBody<T> extends RequiemResponse {
+  body: T;
+}
+``` 

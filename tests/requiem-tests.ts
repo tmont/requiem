@@ -432,28 +432,40 @@ describe('requiem', () => {
 
 			describe('requestJson', () => {
 				it(`should request ${protocol} URL`, async () => {
+					const url = getUrl(protocol, '200.json');
 					const result = await requiem.requestJson<typeof defaultJson>({
 						...commonOptions,
-						url: getUrl(protocol, '200.json'),
+						url,
 					});
 
-					expect(result).to.eql(defaultJson);
+					expect(result.statusCode).to.equal(200);
+					expect(result.requestedUrl).to.equal(url);
+					expect(result).to.have.property('body');
+					expect(result.body).to.eql(defaultJson);
 				});
 
 				if (protocol === 'http') {
 					it(`should request ${protocol} URL with string`, async () => {
-						const result = await requiem.requestJson<typeof defaultJson>(getUrl(protocol, '200.json'));
-						expect(result).to.eql(defaultJson);
+						const url = getUrl(protocol, '200.json');
+						const result = await requiem.requestJson<typeof defaultJson>(url);
+						expect(result.statusCode).to.equal(200);
+						expect(result.requestedUrl).to.equal(url);
+						expect(result).to.have.property('body');
+						expect(result.body).to.eql(defaultJson);
 					});
 				}
 
 				it(`should request ${protocol} URL that returns 5xx`, async () => {
+					const url = getUrl(protocol, '500.json');
 					const result = await requiem.requestJson<typeof defaultJson>({
 						...commonOptions,
-						url: getUrl(protocol, '500.json'),
+						url: url,
 					});
 
-					expect(result).to.eql(defaultJson);
+					expect(result.statusCode).to.equal(500);
+					expect(result.requestedUrl).to.equal(url);
+					expect(result).to.have.property('body');
+					expect(result.body).to.eql(defaultJson);
 				});
 
 				it(`should handle ${protocol} URL that does not return JSON`, async () => {
@@ -503,7 +515,10 @@ describe('requiem', () => {
 						method: 'POST',
 						bodyJson,
 					});
-					expect(result).to.eql(bodyJson);
+					expect(result.statusCode).to.equal(200);
+					expect(result.requestedUrl).to.equal(url);
+					expect(result).to.have.property('body');
+					expect(result.body).to.eql(bodyJson);
 				});
 
 				it('should throw error for invalid status code', async () => {
