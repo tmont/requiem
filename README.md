@@ -12,7 +12,7 @@ full-featured, with many bells and whistles.
 ### Features
 - Follow redirects (configurable via `followRedirects` configuration option)
 - Timeouts will throw errors, don't have to abort the request yourself (configurable via `timeout` configuration option)
-- Supports all configuration parameters you can pass to `http.request()`
+- Supports all configuration parameters you can pass to `https.request()`
 - Streaming
 - Promise-based
 - First-class JSON support
