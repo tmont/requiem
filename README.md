@@ -157,3 +157,48 @@ interface RequiemResponseWithBody<T> extends RequiemResponse {
   body: T;
 }
 ``` 
+
+### Lower-level APIs
+Not recommended for frequent usage, but these APIs are available for more
+fine-grained control over the request lifecycle.
+
+Example:
+
+```javascript
+const shouldAbortRequest = () => {
+  // some kind of logic here
+  return true;
+};
+
+const options = {
+  url: 'https://example.com/',
+  followRedirects: 5
+};
+const req = requiem.createRequest(options);
+req.on('abort', () => console.log('request aborted'));
+const intervalId = setInterval(() => {
+  if (shouldAbortRequest()) {
+    req.abort();
+    clearInterval(intervalId);
+  }
+}, 500);
+
+requiem.sendRequest(req, options)
+  .then((res) => console.log('request was not aborted'))
+  .catch((err) => console.error(err.message))
+  .finally(() => clearInterval(intervalId));
+
+```
+
+#### `.createRequest(options: RequiemOptions): RequiemRequest`
+Creates a request object, but does not send it. Useful for aborting a request
+if necessary.
+
+```
+interface RequiemRequest extends http.ClientRequest {
+  requestedUrl: string;
+}
+```
+
+#### `.sendRequest(req: RequiemRequest, options: RequiemOptions): Promise<RequiemResponse>`
+Sends a request manually

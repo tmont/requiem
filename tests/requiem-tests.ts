@@ -14,6 +14,7 @@ type UrlType =
 	'500.txt' |
 	'auth' |
 	'timeout' |
+	'destroy' |
 	'redirect/invalid' |
 	'redirect/1/200.json' |
 	'redirect/2/200.json' |
@@ -39,6 +40,9 @@ const routeHandlers: Record<UrlType, express.RequestHandler> = {
 			res.setHeader('Content-Type', 'text/plain');
 			res.send('did not timeout');
 		}, 1000);
+	},
+	destroy: (req, res) => {
+		res.destroy();
 	},
 	'200.json': (req, res) => {
 		res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -263,6 +267,43 @@ describe('requiem', () => {
 						expect(err.code).to.equal('Timeout');
 						expect(err.req).to.be.an('object');
 						expect(err.message).to.equal('Reached timeout limit (100ms), request aborted');
+						return;
+					}
+
+					throw new Error('expected error to be thrown');
+				});
+
+				it(`should request ${protocol} URL and gracefully handle socket hang up`, async () => {
+					const url = getUrl(protocol, 'destroy');
+					try {
+						await requiem.request({
+							...commonOptions,
+							url,
+						});
+					} catch (e) {
+						const err = e as Error & { code: string };
+						expect(err.code).to.equal('ECONNRESET');
+						return;
+					}
+
+					throw new Error('expected error to be thrown');
+				});
+
+				it(`should request ${protocol} URL and handle abortion`, async () => {
+					const url = getUrl(protocol, 'timeout');
+					const options = {
+						url,
+						...commonOptions,
+					};
+					try {
+						const req = requiem.createRequest(options);
+						setTimeout(() => req.abort(), 100);
+						await requiem.sendRequest(req, options);
+					} catch (e) {
+						const err = e as requiem.RequiemError;
+						expect(err.code).to.equal('RequestAbort');
+						expect(err.req).to.be.an('object');
+						expect(err.message).to.equal('Request was aborted');
 						return;
 					}
 

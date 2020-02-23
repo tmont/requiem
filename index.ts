@@ -286,9 +286,8 @@ export const createRequest = (options: RequiemOptions): RequiemRequest => {
 	});
 };
 
-export const request = (options: RequiemOptions): Promise<RequiemResponse> => {
+export const sendRequest = (req: RequiemRequest, options: RequiemOptions): Promise<RequiemResponse> => {
 	const optionsObj = getObjectionsObject(options);
-	const req = createRequest(optionsObj);
 	return new Promise<RequiemResponse>((resolve, reject) => {
 		req.on('response', (res) => {
 			resolve(responseHandler(req, res, optionsObj));
@@ -310,6 +309,12 @@ export const request = (options: RequiemOptions): Promise<RequiemResponse> => {
 
 		req.end();
 	});
+};
+
+export const request = (options: RequiemOptions): Promise<RequiemResponse> => {
+	const optionsObj = getObjectionsObject(options);
+	const req = createRequest(optionsObj);
+	return sendRequest(req, optionsObj);
 };
 
 export const requestBody = async (options: RequiemOptions): Promise<RequiemResponseWithBody<Buffer>> => {
