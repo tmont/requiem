@@ -2,8 +2,6 @@ import * as http from 'http';
 import * as https from 'https';
 import * as tls from 'tls';
 
-const httpLib = (url: string) => /^https:/.test(url) ? https : http;
-
 const formatUrl = (args: any): URL => {
 	if (!args.host) {
 		throw new Error(`requiem expects either "url" or "host" option to be specified`);
@@ -281,7 +279,7 @@ export const createRequest = (options: RequiemOptions): RequiemRequest => {
 		throw new RequiemError('InvalidUrl', `URL could not be formatted properly`);
 	}
 
-	const lib = httpLib(urlStr);
+	const lib = /^https:/.test(urlStr) ? https : http;
 	const req = lib.request(url, httpOptions);
 	return Object.assign(req, {
 		requestedUrl: urlStr,
