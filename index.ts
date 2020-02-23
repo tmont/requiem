@@ -152,10 +152,14 @@ const followRedirects = async (
 		};
 		const req = createRequest(newOptions);
 		req.on('response', (res) => {
+			res.on('error', reject);
 			const reqRes: RequiemResponse = Object.assign(res, {
 				requestedUrl: newUrl,
 			});
-			resolve(followRedirects(urls.concat(newUrl), reqRes, options, depth + 1));
+
+			followRedirects(urls.concat(newUrl), reqRes, options, depth + 1)
+				.then(resolve)
+				.catch(reject);
 		});
 		wireRequestEvents(req, newOptions, reject);
 		req.end();
@@ -290,7 +294,10 @@ export const sendRequest = (req: RequiemRequest, options: RequiemOptions): Promi
 	const optionsObj = getObjectionsObject(options);
 	return new Promise<RequiemResponse>((resolve, reject) => {
 		req.on('response', (res) => {
-			resolve(responseHandler(req, res, optionsObj));
+			res.on('error', reject);
+			responseHandler(req, res, optionsObj)
+				.then(resolve)
+				.catch(reject);
 		});
 
 		wireRequestEvents(req, optionsObj, reject);
@@ -320,8 +327,7 @@ export const request = (options: RequiemOptions): Promise<RequiemResponse> => {
 export const requestBody = async (options: RequiemOptions): Promise<RequiemResponseWithBody<Buffer>> => {
 	const res = await request(options);
 	const buffers: Buffer[] = [];
-	return new Promise<RequiemResponseWithBody<Buffer>>((resolve, reject) => {
-		res.on('error', reject);
+	return new Promise<RequiemResponseWithBody<Buffer>>((resolve) => {
 		res.on('data', chunk => buffers.push(chunk));
 		res.on('end', () => {
 			const result: RequiemResponseWithBody<Buffer> = Object.assign(res, {

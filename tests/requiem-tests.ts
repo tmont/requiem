@@ -310,6 +310,42 @@ describe('requiem', () => {
 					throw new Error('expected error to be thrown');
 				});
 
+				it(`should request ${protocol} URL and handle request error`, async () => {
+					const url = getUrl(protocol, 'timeout');
+					const options = {
+						url,
+						...commonOptions,
+					};
+					const err = new Error('sux');
+					try {
+						const req = requiem.createRequest(options);
+						setTimeout(() => req.emit('error', err), 100);
+						await requiem.sendRequest(req, options);
+					} catch (e) {
+						expect(e).to.equal(err);
+						return;
+					}
+
+					throw new Error('expected error to be thrown');
+				});
+
+				if (protocol === 'https') {
+					it(`should request ${protocol} URL and handle SSL error`, async () => {
+						const url = getUrl(protocol, '200.json');
+						const options = {
+							url,
+						};
+						try {
+							await requiem.request(options);
+						} catch (e) {
+							expect(e.message).to.equal('self signed certificate');
+							return;
+						}
+
+						throw new Error('expected error to be thrown');
+					});
+				}
+
 				it(`should request ${protocol} URL that returns 5xx`, async () => {
 					const url = getUrl(protocol, '500.json');
 					const res = await requiem.request({
