@@ -201,4 +201,4 @@ interface RequiemRequest extends http.ClientRequest {
 ```
 
 #### `.sendRequest(req: RequiemRequest, options: RequiemOptions): Promise<RequiemResponse>`
-Sends a request manually
+Sends a request created by `createRequest()` manually.
