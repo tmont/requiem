@@ -39,6 +39,7 @@ declare type RequiemOptionsObject = RequiemUrlWithBodyOptions | RequiemUrlWithJs
 export declare type RequiemOptions = string | RequiemOptionsObject;
 export interface RequiemResponse extends http.IncomingMessage {
     requestedUrl: string;
+    reverseProxy(res: http.ServerResponse): http.ServerResponse;
 }
 export interface RequiemResponseWithBody<T> extends RequiemResponse {
     body: T;

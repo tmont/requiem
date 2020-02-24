@@ -19,6 +19,7 @@ full-featured, with many bells and whistles.
 - Promise-based
 - First-class JSON support
 - First-class TypeScript support
+- Reverse proxy
 - Automatically throw based on status code (configurable via `throwOnErrorResponse` configuration option)
 
 ### Installation
@@ -94,6 +95,14 @@ const throwOnErrorOptions = {
 requiem.requestBody(throwOnErrorOptions)
   .then((res) => console.log(res.body.toString('utf8')))
   .catch((err) => console.error(err));
+
+// act as reverse proxy (will set all headers/status code on outgoing response)
+const app = express();
+app.get('/test', async (req, outgoingRes) => {
+  const proxiedUrl = req.query.url;
+  const incomingRes = await requiem.request(proxiedUrl);
+  incomingRes.pipe(outgoingRes);
+});
 ```
 
 ### API
@@ -142,8 +151,16 @@ The response body is not consumed.
 ```typescript
 interface RequiemResponse extends http.IncomingMessage {
   requestedUrl: string;
+  reverseProxy: (outgoing: http.ServerResponse) => http.IncomingMEssage;
 }
 ``` 
+
+For convenience, you can use the `reverseProxy` method to pipe the response
+to another `ServerResponse` instance. This will propagate the `statusCode`
+as well as all headers from the proxied response.
+
+For other streaming uses (e.g. streaming to a local file) just use the
+built-in `.pipe()` method explicitly.
 
 #### `.requestBody(options: RequiemOptions): Promise<RequiemResponseWithBody<Buffer>>`
 Sends a request, consumes the response body, and returns the response with the

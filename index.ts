@@ -66,6 +66,7 @@ export type RequiemOptions = string | RequiemOptionsObject;
 
 export interface RequiemResponse extends http.IncomingMessage {
 	requestedUrl: string;
+	reverseProxy(res: http.ServerResponse): http.ServerResponse;
 }
 
 export interface RequiemResponseWithBody<T> extends RequiemResponse {
@@ -102,6 +103,24 @@ export class RequiemError extends Error {
 		this.res = res || null;
 	}
 }
+
+const createResponse = (incoming: http.IncomingMessage, url: string): RequiemResponse => {
+	return Object.assign(incoming, {
+		requestedUrl: url,
+		reverseProxy: (outgoing: http.ServerResponse) => {
+			Object.keys(incoming.headers).forEach((name) => {
+				const value = incoming.headers[name];
+				if (typeof(value) !== 'undefined') {
+					outgoing.setHeader(name, value);
+				}
+			});
+			if (typeof(incoming.statusCode) !== 'undefined') {
+				outgoing.statusCode = incoming.statusCode;
+			}
+			return incoming.pipe(outgoing);
+		}
+	});
+};
 
 const followRedirects = async (
 	urls: string[],
@@ -153,9 +172,7 @@ const followRedirects = async (
 		const req = createRequest(newOptions);
 		req.on('response', (res) => {
 			res.on('error', reject);
-			const reqRes: RequiemResponse = Object.assign(res, {
-				requestedUrl: newUrl,
-			});
+			const reqRes: RequiemResponse = createResponse(res, newUrl);
 
 			followRedirects(urls.concat(newUrl), reqRes, options, depth + 1)
 				.then(resolve)
@@ -171,9 +188,7 @@ const responseHandler = async (
 	res: http.IncomingMessage,
 	options: RequiemOptionsObject,
 ): Promise<RequiemResponse> => {
-	const reqRes: RequiemResponse = Object.assign(res, {
-		requestedUrl: req.requestedUrl,
-	});
+	const reqRes: RequiemResponse = createResponse(res, req.requestedUrl);
 	const result = await followRedirects([req.requestedUrl], reqRes, options);
 	if ('throwOnErrorResponse' in options) {
 		if (typeof(options.throwOnErrorResponse) === 'number') {

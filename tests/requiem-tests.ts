@@ -12,6 +12,7 @@ type UrlType =
 	'200.txt' |
 	'500.json' |
 	'500.txt' |
+	'headers.xml' |
 	'auth' |
 	'timeout' |
 	'destroy' |
@@ -28,6 +29,7 @@ const defaultJson = {
 	hello: 'world',
 };
 const defaultText = 'hello world';
+const defaultXml = '<?xml version="1.0" ?><hello>world</hello>';
 
 const routeHandlers: Record<UrlType, express.RequestHandler> = {
 	auth: (req, res) => {
@@ -43,6 +45,14 @@ const routeHandlers: Record<UrlType, express.RequestHandler> = {
 	},
 	destroy: (req, res) => {
 		res.destroy();
+	},
+	'headers.xml': (req, res) => {
+		res.setHeader('Content-Type', 'application/xml');
+		res.setHeader('Content-Length', defaultXml.length);
+		res.setHeader('X-Hello', 'World');
+		res.setHeader('X-Array', [ 'foo', 'bar' ]);
+		res.statusCode = 201;
+		res.send(defaultXml);
 	},
 	'200.json': (req, res) => {
 		res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -707,6 +717,79 @@ describe('requiem', () => {
 						res.pipe(passthru)
 							.on('error', reject)
 							.on('finish', resolve);
+					});
+				});
+
+				describe('Reverse proxy', () => {
+					let otherApp: express.Application;
+					let otherServer: http.Server;
+					const otherPort = httpsPort + 1;
+
+					beforeEach((done) => {
+						otherApp = express();
+						otherApp.use(express.urlencoded({extended: true}));
+						otherApp.use(express.json());
+						otherServer = otherApp.listen(otherPort, done);
+					});
+
+					afterEach((done) => {
+						if (!otherServer) {
+							done();
+							return;
+						}
+
+						otherServer.close(done);
+					});
+
+					it(`should request ${protocol} URL as readable stream and pipe to HTTP response as JSON`, async () => {
+						otherApp.get('/test', async (req, res) => {
+							const url = getUrl(protocol, '200.json');
+							const requiemRes = await requiem.request({
+								...commonOptions,
+								url,
+							});
+
+							requiemRes.reverseProxy(res);
+						});
+
+						const res = await requiem.requestJson(`http://localhost:${otherPort}/test`);
+						expect(res.body).to.eql(defaultJson);
+					});
+
+					it(`should request ${protocol} URL as reverse proxy and propagate status code`, async () => {
+						otherApp.get('/test', async (req, res) => {
+							const url = getUrl(protocol, '500.json');
+							const requiemRes = await requiem.request({
+								...commonOptions,
+								url,
+							});
+
+							requiemRes.reverseProxy(res);
+						});
+
+						const res = await requiem.requestJson(`http://localhost:${otherPort}/test`);
+						expect(res.body).to.eql(defaultJson);
+						expect(res.statusCode).to.equal(500);
+					});
+
+					it(`should request ${protocol} URL as reverse proxy and propagate headers`, async () => {
+						otherApp.get('/test', async (req, res) => {
+							const url = getUrl(protocol, 'headers.xml');
+							const requiemRes = await requiem.request({
+								...commonOptions,
+								url,
+							});
+
+							requiemRes.reverseProxy(res);
+						});
+
+						const res = await requiem.requestBody(`http://localhost:${otherPort}/test`);
+						expect(res.statusCode).to.equal(201);
+						expect(res.body.toString('utf8')).to.eql(defaultXml);
+						expect(res.headers['content-type']).to.equal('application/xml; charset=utf-8');
+						expect(res.headers['content-length']).to.equal(String(defaultXml.length));
+						expect(res.headers['x-hello']).to.equal('World');
+						expect(res.headers['x-array']).to.equal('foo, bar');
 					});
 				});
 

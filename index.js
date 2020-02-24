@@ -36,6 +36,23 @@ class RequiemError extends Error {
     }
 }
 exports.RequiemError = RequiemError;
+const createResponse = (incoming, url) => {
+    return Object.assign(incoming, {
+        requestedUrl: url,
+        reverseProxy: (outgoing) => {
+            Object.keys(incoming.headers).forEach((name) => {
+                const value = incoming.headers[name];
+                if (typeof (value) !== 'undefined') {
+                    outgoing.setHeader(name, value);
+                }
+            });
+            if (typeof (incoming.statusCode) !== 'undefined') {
+                outgoing.statusCode = incoming.statusCode;
+            }
+            return incoming.pipe(outgoing);
+        }
+    });
+};
 const followRedirects = async (urls, res, options, depth = 0) => {
     const statusCode = res.statusCode;
     const maxDepth = options.followRedirects || defaultFollowRedirects;
@@ -64,9 +81,7 @@ const followRedirects = async (urls, res, options, depth = 0) => {
         const req = exports.createRequest(newOptions);
         req.on('response', (res) => {
             res.on('error', reject);
-            const reqRes = Object.assign(res, {
-                requestedUrl: newUrl,
-            });
+            const reqRes = createResponse(res, newUrl);
             followRedirects(urls.concat(newUrl), reqRes, options, depth + 1)
                 .then(resolve)
                 .catch(reject);
@@ -76,9 +91,7 @@ const followRedirects = async (urls, res, options, depth = 0) => {
     });
 };
 const responseHandler = async (req, res, options) => {
-    const reqRes = Object.assign(res, {
-        requestedUrl: req.requestedUrl,
-    });
+    const reqRes = createResponse(res, req.requestedUrl);
     const result = await followRedirects([req.requestedUrl], reqRes, options);
     if ('throwOnErrorResponse' in options) {
         if (typeof (options.throwOnErrorResponse) === 'number') {
