@@ -5,7 +5,7 @@
     "description": "Simple, no-dependency HTTP client for Node",
     "repository": {
         "type": "git",
-        "url": "https://github.com/tmont/requiem-http"
+        "url": "https://github.com/tmont/requiem"
     },
     "scripts": {
         "test": "node_modules/.bin/mocha --require ts-node/register --recursive tests/*.ts",
