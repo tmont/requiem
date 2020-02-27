@@ -101,7 +101,7 @@ const app = express();
 app.get('/test', async (req, outgoingRes) => {
   const proxiedUrl = req.query.url;
   const incomingRes = await requiem.request(proxiedUrl);
-  incomingRes.pipe(outgoingRes);
+  incomingRes.reverseProxy(outgoingRes);
 });
 ```
 
