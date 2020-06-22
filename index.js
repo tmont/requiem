@@ -55,7 +55,12 @@ const createResponse = (incoming, url) => {
 };
 const followRedirects = async (urls, res, options, depth = 0) => {
     const statusCode = res.statusCode;
-    const maxDepth = options.followRedirects || defaultFollowRedirects;
+    if (options.followRedirects === false) {
+        return res;
+    }
+    const maxDepth = typeof (options.followRedirects) !== 'undefined' ?
+        options.followRedirects :
+        defaultFollowRedirects;
     if (depth > maxDepth) {
         throw new RequiemError('TooManyRedirects', `"${urls[0]}" redirected too many times (max redirects: ${maxDepth})`, null, res);
     }

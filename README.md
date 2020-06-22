@@ -76,15 +76,25 @@ requiem.request(postBufferOptions)
   .then((res) => console.log(res.statusCode))
   .catch((err) => console.error(err));
 
-// request a URL but don't follow redirects
+// request a URL but only redirect twice
 // an error is thrown with code "TooManyRedirects" if the redirect limit is reached
-const noRedirectOptions = {
+const limitedRedirectOptions = {
   url: 'https://example.com/',
-  followRedirects: 0
+  followRedirects: 2
 };
-requiem.requestBody(noRedirectOptions)
+requiem.requestBody(limitedRedirectOptions)
   .then((res) => console.log(res.body.toString('utf8')))
   .catch((err) => console.error(err));
+
+// request a URL and don't redirect at all
+const noRedirectOptions = {
+  url: 'https://example.com/',
+  followRedirects: false
+};
+requiem.request(noRedirectOptions)
+  .then((res) => console.log(res.statusCode)) // e.g. "302"
+  .catch((err) => console.error(err));
+
 
 // request a URL and throw if the status is >= 400
 // an error is thrown with code "InvalidStatusCode" if status >= 400

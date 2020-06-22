@@ -427,6 +427,39 @@ describe('requiem', () => {
 					throw new Error(`expected an error to be thrown`);
 				});
 
+				it('should not follow redirects at all', async () => {
+					const url = getUrl(protocol, 'redirect/3/200.json');
+					try {
+						await requiem.request({
+							...commonOptions,
+							url,
+							followRedirects: 0,
+						});
+					} catch (e) {
+						const err = e as requiem.RequiemError;
+						expect(err.message).to.equal(`"${url}" redirected too many times (max redirects: 0)`);
+						expect(err.res).to.be.an('object');
+						expect(err.res!.statusCode).to.equal(302);
+						return;
+					}
+
+					throw new Error(`expected an error to be thrown`);
+				});
+
+				it('should not follow redirects and not throw error', async () => {
+					const url = getUrl(protocol, 'redirect/3/200.json');
+					const res = await requiem.request({
+						...commonOptions,
+						url,
+						followRedirects: false,
+					});
+
+					expect(res.statusCode).to.equal(302);
+					expect(res.requestedUrl).to.equal(url);
+					expect(res.headers.location).to.equal('/redirect/2/200.json');
+					expect(res).to.not.have.property('body');
+				});
+
 				it('should post JSON', async () => {
 					const url = getUrl(protocol, 'post.json');
 					const bodyJson = {
@@ -439,7 +472,7 @@ describe('requiem', () => {
 						bodyJson,
 					});
 
-					expect(res.requestedUrl).to.equal(getUrl(protocol, 'post.json'));
+					expect(res.requestedUrl).to.equal(url);
 					expect(res.statusCode).to.equal(200);
 					expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
 					expect(res).to.not.have.property('body');

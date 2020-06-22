@@ -4,7 +4,7 @@ import * as https from 'https';
 import * as tls from 'tls';
 interface BaseRequiemOptions extends tls.SecureContextOptions, Pick<https.RequestOptions, 'rejectUnauthorized' | 'servername'>, Pick<http.RequestOptions, 'headers' | 'timeout' | 'auth' | 'agent'> {
     method?: string;
-    followRedirects?: number;
+    followRedirects?: number | false;
     throwOnErrorResponse?: boolean | number;
 }
 interface WithBody {
@@ -35,7 +35,7 @@ export interface RequiemHostWithBodyOptions extends RequiemHostOptions, WithBody
 }
 export interface RequiemHostWithJsonOptions extends RequiemHostOptions, WithBodyJson, Partial<Record<keyof WithBody, undefined>> {
 }
-declare type RequiemOptionsObject = RequiemUrlWithBodyOptions | RequiemUrlWithJsonOptions | RequiemHostWithBodyOptions | RequiemHostWithJsonOptions;
+export declare type RequiemOptionsObject = RequiemUrlWithBodyOptions | RequiemUrlWithJsonOptions | RequiemHostWithBodyOptions | RequiemHostWithJsonOptions;
 export declare type RequiemOptions = string | RequiemOptionsObject;
 export interface RequiemResponse extends http.IncomingMessage {
     requestedUrl: string;

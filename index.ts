@@ -22,7 +22,7 @@ interface BaseRequiemOptions extends
 	Pick<https.RequestOptions, 'rejectUnauthorized' | 'servername'>,
 	Pick<http.RequestOptions, 'headers' | 'timeout' | 'auth' | 'agent'> {
 	method?: string;
-	followRedirects?: number;
+	followRedirects?: number | false;
 	throwOnErrorResponse?: boolean | number;
 }
 
@@ -56,7 +56,7 @@ export interface RequiemUrlWithJsonOptions extends RequiemUrlOptions, WithBodyJs
 export interface RequiemHostWithBodyOptions extends RequiemHostOptions, WithBody, Partial<Record<keyof WithBodyJson, undefined>> {}
 export interface RequiemHostWithJsonOptions extends RequiemHostOptions, WithBodyJson, Partial<Record<keyof WithBody, undefined>> {}
 
-type RequiemOptionsObject =
+export type RequiemOptionsObject =
 	RequiemUrlWithBodyOptions |
 	RequiemUrlWithJsonOptions |
 	RequiemHostWithBodyOptions |
@@ -129,7 +129,14 @@ const followRedirects = async (
 	depth = 0,
 ): Promise<RequiemResponse> => {
 	const statusCode = res.statusCode;
-	const maxDepth = options.followRedirects || defaultFollowRedirects;
+	if (options.followRedirects === false) {
+		return res;
+	}
+
+	const maxDepth = typeof(options.followRedirects) !== 'undefined' ?
+		options.followRedirects :
+		defaultFollowRedirects;
+
 	if (depth > maxDepth) {
 		throw new RequiemError(
 			'TooManyRedirects',
